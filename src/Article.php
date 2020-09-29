@@ -36,4 +36,23 @@ class Article
 		$this->is_preview = $is_preview;
 		$this->notice = $notice;
 	}
+
+	public function getReadingMinutes() : int
+	{
+		$word_count = str_word_count(
+			strip_tags(
+				preg_replace('/<pre>(.*?)<\\/pre>/', '', $this->html)
+			)
+		);
+
+		$word_count += 2 * substr_count($this->html, '<p>');
+
+		$word_count += substr_count($this->html, '<h');
+
+		$word_count += substr_count($this->html, '<code');
+
+		$word_count += substr_count($this->html, '<a href=');
+
+		return round(0.25 + ($word_count / 265));
+	}
 }
