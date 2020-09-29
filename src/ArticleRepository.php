@@ -25,7 +25,13 @@ class ArticleRepository
 
         foreach (scandir($article_dir) as $file) {
             if (strpos($file, '.md') === (strlen($file) - 3)) {
-                $article = self::get(substr($file, 0, -3));
+                $name = substr($file, 0, -3);
+
+                if (!self::isValidArticleName($name)) {
+                    continue;
+                }
+
+                $article = self::get($name);
 
                 if ($article) {
                     $date = new \DateTime($article->date, new \DateTimeZone('America/New_York'));
@@ -46,22 +52,21 @@ class ArticleRepository
 
         return $articles;
     }
+
+    private static function isValidArticleName(string $name)
+    {
+        return preg_match('/^[a-z0-9\-]+$/', $name);
+    }
     
-    public function get(
-        string $name
-    ) : ?Article {
-        if (!preg_match('/^[a-z0-9\-]+$/', $name)) {
-            return null;
+    public function get(string $name) : Article
+    {
+        if (!self::isValidArticleName($name)) {
+            throw new \UnexpectedValueException('Bad article name');
         }
 
         $is_preview = false;
 
-        try {
-            $markdown = $this->getMarkdown($name, $is_preview);
-        } catch (\Exception $e) {
-            header("HTTP/1.0 404 Not Found");
-            return null;
-        }
+        $markdown = $this->getMarkdown($name, $is_preview);
         
         $alt_html_inline_parser = new AltHtmlInlineParser();
         
@@ -121,6 +126,9 @@ class ArticleRepository
 
     private function getMarkdown(string $name, bool &$is_preview) : string
     {
+        if (!preg_match('/^[a-z0-9\-_]+$/', $name)) {
+            throw new \UnexpectedValueException($name . ' is invalid');
+        }
         $static_file_name = $this->path . '/' . $name . '.md';
 
         if (file_exists($static_file_name)) {
@@ -128,7 +136,7 @@ class ArticleRepository
         }
 
         if (!$this->github_config) {
-            throw new \UnexpectedValueException('No GitHub config supplied');
+            throw new \UnexpectedValueException('Could not find ' . $name . ' and no GitHub config supplied for previews');
         }
 
         $markdown = self::getMarkdownFromGithub(
