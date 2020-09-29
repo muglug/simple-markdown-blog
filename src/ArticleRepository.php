@@ -55,7 +55,7 @@ class ArticleRepository
         $is_preview = false;
 
         try {
-            $markdown = self::getMarkdown($name, $is_preview);
+            $markdown = $this->getMarkdown($name, $is_preview);
         } catch (\Exception $e) {
             header("HTTP/1.0 404 Not Found");
             return null;
@@ -117,7 +117,7 @@ class ArticleRepository
         return $html;
     }
 
-    private static function getMarkdown(string $name, bool &$is_preview) : string
+    private function getMarkdown(string $name, bool &$is_preview) : string
     {
         $static_file_name = $this->path . '/' . $name . '.md';
 
