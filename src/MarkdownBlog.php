@@ -10,7 +10,7 @@ class MarkdownBlog
 	 */
 	public $articles;
 
-	public function __construct(string $path) {
-		$this->articles = new ArticleRepository($path);
+	public function __construct(string $path, ?GithubConfig $github_config = null) {
+		$this->articles = new ArticleRepository($path, $github_config);
 	}
 }
