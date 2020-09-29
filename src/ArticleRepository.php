@@ -8,10 +8,12 @@ use League\CommonMark\Ext\Table\TableExtension;
 class ArticleRepository
 {
     private $path;
+    private $github_config;
 
-    public function __construct(string $path)
+    public function __construct(string $path, ?GithubConfig $github_config)
     {
         $this->path = $path;
+        $this->github_config = $github_config;
     }
 
     /** @return Article[] */
@@ -125,28 +127,32 @@ class ArticleRepository
             return file_get_contents($static_file_name);
         }
 
-        $blogconfig = require(__DIR__ . '/../blogconfig.php');
+        if (!$this->github_config) {
+            throw new \UnexpectedValueException('No GitHub config supplied');
+        }
 
         $markdown = self::getMarkdownFromGithub(
             $name,
-            $blogconfig['owner'],
-            $blogconfig['repo'],
-            $blogconfig['github_token']
+            $this->github_config
         );
         $is_preview = true;
         return $markdown;
     }
 
-    private static function getMarkdownFromGithub(
-        string $name,
-        string $owner,
-        string $repo,
-        string $github_token
-    ) : string {
+    private static function getMarkdownFromGithub(string $name, GithubConfig $github_config) : string
+    {
         $github_api_url = 'https://api.github.com';
 
         // Prepare new cURL resource
-        $ch = curl_init($github_api_url . '/repos/' . $owner . '/' . $repo . '/contents/' . $name . '.md');
+        $ch = curl_init(
+            $github_api_url
+                . '/repos/'
+                . $github_config->owner
+                . '/'
+                . $github_config->repo
+                . '/contents/'
+                . $name . '.md'
+        );
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLINFO_HEADER_OUT, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
@@ -157,8 +163,8 @@ class ArticleRepository
             CURLOPT_HTTPHEADER,
             [
                 'Accept: application/vnd.github.v3.raw',
-                'Authorization: token ' . $github_token,
-                'User-Agent: Psalm Blog crawler',
+                'Authorization: token ' . $github_config->token,
+                'User-Agent: Muglug Markdown Blog crawler',
             ]
         );
 
