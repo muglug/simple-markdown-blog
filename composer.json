@@ -1,5 +1,5 @@
 {
-    "name": "muglug/blog",
+    "name": "muglug/simple-markdown-blog",
     "type": "library",
     "require": {
        "league/commonmark": "^1.0",
