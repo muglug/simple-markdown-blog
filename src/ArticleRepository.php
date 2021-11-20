@@ -36,7 +36,7 @@ class ArticleRepository
                 if ($article) {
                     $date = new \DateTime($article->date, new \DateTimeZone('America/New_York'));
                     
-                    if ($date->format('U') < mktime()) {
+                    if ($date->format('U') < time()) {
                         $articles[] = $article;
                     }
                 }
