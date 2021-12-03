@@ -46,7 +46,7 @@ class ArticleRepository
         usort(
             $articles,
             function (Article $a, Article $b) : int {
-                return (int) ($a->date < $b->date);
+                return (\strtotime($a->date) < \strtotime($b->date)) ? 1 : -1;
             }
         );
 
