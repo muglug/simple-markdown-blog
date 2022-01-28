@@ -3,7 +3,7 @@
 namespace Muglug\Blog;
 
 use League\CommonMark\CommonMarkConverter;
-use League\CommonMark\Ext\Table\TableExtension;
+use League\CommonMark\Extension\Table\TableExtension;
 
 class ArticleRepository
 {
@@ -35,7 +35,7 @@ class ArticleRepository
 
                 if ($article) {
                     $date = new \DateTime($article->date, new \DateTimeZone('America/New_York'));
-                    
+
                     if ($date->format('U') < time()) {
                         $articles[] = $article;
                     }
@@ -57,7 +57,7 @@ class ArticleRepository
     {
         return preg_match('/^[a-z0-9\-]+$/', $name);
     }
-    
+
     public function get(string $name) : Article
     {
         if (!self::isValidArticleName($name)) {
@@ -67,9 +67,9 @@ class ArticleRepository
         $is_preview = false;
 
         $markdown = $this->getMarkdown($name, $is_preview);
-        
+
         $alt_html_inline_parser = new AltHtmlInlineParser();
-        
+
         $notice = '';
 
         $html = self::convertMarkdownToHtml($markdown, $alt_html_inline_parser, $notice);
@@ -77,7 +77,7 @@ class ArticleRepository
         $snippet = mb_substr(trim(strip_tags($html)), 0, 150);
 
         $description = substr($snippet, 0, strrpos($snippet, ' ')) . '…';
-        
+
         $date = $alt_html_inline_parser->getDate();
         $title = $alt_html_inline_parser->getTitle();
         $canonical = $alt_html_inline_parser->getCanonical();
@@ -95,7 +95,7 @@ class ArticleRepository
             $is_preview
         );
     }
-    
+
     public static function convertMarkdownToHtml(
         string $markdown,
         ?AltHtmlInlineParser $alt_html_inline_parser,
@@ -108,19 +108,19 @@ class ArticleRepository
         // Add this extension
         $environment->addExtension(new TableExtension());
         $environment->addBlockParser($alt_heading_parser, 100);
-        
+
         if ($alt_html_inline_parser) {
             $environment->addInlineParser($alt_html_inline_parser, 100);
         }
 
         $converter = new CommonMarkConverter([], $environment);
-        
+
         $html = $converter->convertToHtml($markdown);
-        
+
         if ($alt_html_inline_parser) {
             $notice = $converter->convertToHtml($alt_html_inline_parser->getNotice());
         }
-        
+
         return $html;
     }
 
