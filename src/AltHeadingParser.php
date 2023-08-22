@@ -26,7 +26,7 @@ class AltHeadingParser implements \League\CommonMark\Block\Parser\BlockParserInt
 
         $heading = new \League\CommonMark\Block\Element\Heading($level, self::preventOrphans($str));
 
-        $id = preg_replace('/[^a-z\-]+/', '', strtolower(str_replace(' ', '-', $str)));
+        $id = preg_replace('/[^a-z0-9\-]+/', '', strtolower(str_replace(' ', '-', $str)));
 
         $heading->data['attributes'] = ['id' => $id];
 
