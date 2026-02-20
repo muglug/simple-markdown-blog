@@ -2,8 +2,11 @@
 
 namespace Muglug\Blog;
 
-use League\CommonMark\CommonMarkConverter;
+use League\CommonMark\Environment\Environment;
+use League\CommonMark\Event\DocumentParsedEvent;
+use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
 use League\CommonMark\Extension\Table\TableExtension;
+use League\CommonMark\MarkdownConverter;
 
 class ArticleRepository
 {
@@ -103,22 +106,21 @@ class ArticleRepository
     ) : string {
         $alt_heading_parser = new AltHeadingParser();
 
-        $environment = \League\CommonMark\Environment::createCommonMarkEnvironment();
-
-        // Add this extension
+        $environment = new Environment();
+        $environment->addExtension(new CommonMarkCoreExtension());
         $environment->addExtension(new TableExtension());
-        $environment->addBlockParser($alt_heading_parser, 100);
+        $environment->addEventListener(DocumentParsedEvent::class, $alt_heading_parser);
 
         if ($alt_html_inline_parser) {
             $environment->addInlineParser($alt_html_inline_parser, 100);
         }
 
-        $converter = new CommonMarkConverter([], $environment);
+        $converter = new MarkdownConverter($environment);
 
-        $html = $converter->convertToHtml($markdown);
+        $html = (string) $converter->convert($markdown);
 
         if ($alt_html_inline_parser) {
-            $notice = $converter->convertToHtml($alt_html_inline_parser->getNotice());
+            $notice = (string) $converter->convert($alt_html_inline_parser->getNotice());
         }
 
         return $html;

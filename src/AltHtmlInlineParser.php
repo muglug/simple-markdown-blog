@@ -2,10 +2,11 @@
 
 namespace Muglug\Blog;
 
-use League\CommonMark\Inline\Element\HtmlInline;
-use League\CommonMark\InlineParserContext;
+use League\CommonMark\Extension\CommonMark\Node\Inline\HtmlInline;
+use League\CommonMark\Parser\Inline\InlineParserInterface;
+use League\CommonMark\Parser\Inline\InlineParserMatch;
+use League\CommonMark\Parser\InlineParserContext;
 use League\CommonMark\Util\RegexHelper;
-use League\CommonMark\Inline\Parser\InlineParserInterface;
 
 class AltHtmlInlineParser implements InlineParserInterface
 {
@@ -27,19 +28,11 @@ class AltHtmlInlineParser implements InlineParserInterface
     /** @var ?string */
     private $canonical = null;
 
-    /**
-     * @return string[]
-     */
-    public function getCharacters(): array
+    public function getMatchDefinition(): InlineParserMatch
     {
-        return ['<'];
+        return InlineParserMatch::string('<');
     }
 
-    /**
-     * @param InlineParserContext $inlineContext
-     *
-     * @return bool
-     */
     public function parse(InlineParserContext $inlineContext): bool
     {
         $cursor = $inlineContext->getCursor();
