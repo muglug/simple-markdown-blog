@@ -71,27 +71,28 @@ class ArticleRepository
 
         $markdown = $this->getMarkdown($name, $is_preview);
 
-        $alt_html_inline_parser = new AltHtmlInlineParser();
+        // Extract metadata directly from the raw markdown frontmatter
+        // (CommonMark v2 parses <!-- --> as HTML blocks, so inline parsers never see them)
+        $metadata = self::extractFrontmatter($markdown);
 
         $notice = '';
 
-        $html = self::convertMarkdownToHtml($markdown, $alt_html_inline_parser, $notice);
+        $html = self::convertMarkdownToHtml($markdown, new AltHtmlInlineParser(), $notice);
 
         $snippet = mb_substr(trim(strip_tags($html)), 0, 150);
 
         $description = substr($snippet, 0, strrpos($snippet, ' ')) . '…';
 
-        $date = $alt_html_inline_parser->getDate();
-        $title = $alt_html_inline_parser->getTitle();
-        $canonical = $alt_html_inline_parser->getCanonical();
-        $author = $alt_html_inline_parser->getAuthor();
+        if (isset($metadata['notice']) && $metadata['notice'] !== '') {
+            $notice = self::convertMarkdownToHtml($metadata['notice'], null);
+        }
 
         return new Article(
-            $title,
+            $metadata['title'] ?? '',
             $description,
-            $canonical,
-            $date,
-            $author,
+            $metadata['canonical'] ?? '',
+            $metadata['date'] ?? '',
+            $metadata['author'] ?? '',
             $name,
             $html,
             $notice,
@@ -117,13 +118,33 @@ class ArticleRepository
 
         $converter = new MarkdownConverter($environment);
 
-        $html = (string) $converter->convert($markdown);
+        return (string) $converter->convert($markdown);
+    }
 
-        if ($alt_html_inline_parser) {
-            $notice = (string) $converter->convert($alt_html_inline_parser->getNotice());
+    /**
+     * @return array<string, string>
+     */
+    private static function extractFrontmatter(string $markdown) : array
+    {
+        $metadata = [];
+
+        if (preg_match('/^<!--\s*(.*?)\s*-->/s', $markdown, $matches)) {
+            $lines = explode("\n", $matches[1]);
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if ($line === '') {
+                    continue;
+                }
+                $colon_pos = strpos($line, ':');
+                if ($colon_pos !== false) {
+                    $key = trim(substr($line, 0, $colon_pos));
+                    $value = trim(substr($line, $colon_pos + 1));
+                    $metadata[$key] = $value;
+                }
+            }
         }
 
-        return $html;
+        return $metadata;
     }
 
     private function getMarkdown(string $name, bool &$is_preview) : string
