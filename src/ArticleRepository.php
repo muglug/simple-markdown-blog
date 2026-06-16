@@ -5,6 +5,7 @@ namespace Muglug\Blog;
 use League\CommonMark\Environment\Environment;
 use League\CommonMark\Event\DocumentParsedEvent;
 use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
+use League\CommonMark\Extension\ExternalLink\ExternalLinkExtension;
 use League\CommonMark\Extension\Table\TableExtension;
 use League\CommonMark\MarkdownConverter;
 
@@ -107,9 +108,17 @@ class ArticleRepository
     ) : string {
         $alt_heading_parser = new AltHeadingParser();
 
-        $environment = new Environment();
+        $environment = new Environment([
+            'external_link' => [
+                'internal_hosts' => 'mattbrown.dev',
+                'open_in_new_window' => true,
+                'noopener' => 'external',
+                'noreferrer' => 'external',
+            ],
+        ]);
         $environment->addExtension(new CommonMarkCoreExtension());
         $environment->addExtension(new TableExtension());
+        $environment->addExtension(new ExternalLinkExtension());
         $environment->addEventListener(DocumentParsedEvent::class, $alt_heading_parser);
 
         if ($alt_html_inline_parser) {
