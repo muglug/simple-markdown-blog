@@ -110,7 +110,9 @@ class ArticleRepository
 
         $environment = new Environment([
             'external_link' => [
-                'internal_hosts' => 'mattbrown.dev',
+                // Treat the host serving this request as internal, so links to
+                // the current domain stay in-tab while external links don't.
+                'internal_hosts' => $_SERVER['HTTP_HOST'] ?? '',
                 'open_in_new_window' => true,
                 'noopener' => 'external',
                 'noreferrer' => 'external',
